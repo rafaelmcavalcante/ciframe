@@ -236,38 +236,38 @@ processos (o payload bruto difere só na ordem de `acordes`).
 
 **Arquivos:** `main.py`, `matching.py`, `sequencias_db.py`.
 
-- [ ] `GET /sequencias`: servir do mapa `id → {acordes, criado_em}` em ordem de
+- [x] `GET /sequencias`: servir do mapa `id → {acordes, criado_em}` em ordem de
   id, sem paginação. Formato:
   `[{"id": 0, "acordes": ["Bm","G","D","A"], "criado_em": "..."}]`.
   Resposta via `json.dumps(...)`, sem `jsonify`.
-- [ ] `POST /sequencias`: ler `request.get_json(silent=True)`; `None` ou corpo
+- [x] `POST /sequencias`: ler `request.get_json(silent=True)`; `None` ou corpo
   que não seja objeto → 400. Validar `acordes` como lista de strings:
   1 a 12 itens; cada token com `strip()` não vazio; até 12 caracteres após o
   `trim`; sem espaço, `,`, `;`, `|` ou caractere de controle; item que não seja
   string → 400. A validação é sintática, não musical: acorde desconhecido é
   aceito e repetições são permitidas. Mensagem de erro em `{"erro": "..."}`.
-- [ ] Calcular `chave = ','.join(tokens_lower)` e
+- [x] Calcular `chave = ','.join(tokens_lower)` e
   `chave_legado = ''.join(tokens_lower)`; consultar os mapas. Colisão em
   qualquer uma → 409 com `{"erro": "...", "id": <id_existente>}`.
-- [ ] Inserir preservando a grafia e a ordem originais; 201 com o objeto criado.
+- [x] Inserir preservando a grafia e a ordem originais; 201 com o objeto criado.
   Em corrida entre a checagem e o `INSERT`, capturar `sqlite3.IntegrityError`,
   buscar o id existente e devolver 409 — nunca 500.
-- [ ] Em `get_similares`, ramo `sequencia_tag` (`main.py:190-197`): normalizar a
+- [x] Em `get_similares`, ramo `sequencia_tag` (`main.py:190-197`): normalizar a
   entrada dividindo por `,`, aplicando `trim`, descartando vazios e convertendo
   para minúsculas; montar `chave` e `chave_legado`; procurar primeiro `chave`,
   depois `chave_legado`; não encontrada → `json.dumps([])`. Usar `is not None`
   para aceitar o id 0.
-- [ ] **Só agora remover** o dict `sequencias` (`main.py:40-45`) e a comparação
+- [x] **Só agora remover** o dict `sequencias` (`main.py:40-45`) e a comparação
   `if acordes in sequencias` (`main.py:194-195`), junto com o `id_seq` que vinha
   dele: o lookup passa a ser pelos mapas do catálogo. Nenhuma linha de `main.py`
   pode continuar referenciando esse dict; `grep -n "in sequencias"` não deve
   achar nada. Este é o passo que fecha o buraco aberto no passo 1 — até aqui o
   app rodava com o caminho antigo.
-- [ ] Manter o resto do contrato de `/similares`: filtro `generos`, `pagina` de
+- [x] Manter o resto do contrato de `/similares`: filtro `generos`, `pagina` de
   100 e os 9 campos por música. As duas formas passam a ser equivalentes:
   `?sequencia=Bm,G,D,A` e `?sequencia=BmGDA`. Mudanças deliberadas: espaços ao
   redor dos tokens e caixa (`bm,g,d,a`) passam a ser aceitos.
-- [ ] Nada de `jsonify`, nada de mudar `Content-Type`; o `after_request` de CORS
+- [x] Nada de `jsonify`, nada de mudar `Content-Type`; o `after_request` de CORS
   (`main.py:274-277`) continua valendo para as rotas novas.
 
 **Verificação:** matriz mínima com o servidor local (ajustar a porta conforme o

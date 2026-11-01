@@ -11,6 +11,8 @@ import os
 import sqlite3
 from datetime import datetime, timezone
 
+from matching import montar_chaves
+
 logger = logging.getLogger(__name__)
 
 VERSAO_ESQUEMA = 1
@@ -57,12 +59,6 @@ def caminho_db():
     if os.path.isdir('/app'):
         return CAMINHO_DOCKER
     return CAMINHO_LOCAL
-
-
-def montar_chaves(acordes):
-    """Devolve (chave, chave_legado) normalizadas em minusculas."""
-    tokens = [acorde.lower() for acorde in acordes]
-    return ','.join(tokens), ''.join(tokens)
 
 
 def _agora_utc():

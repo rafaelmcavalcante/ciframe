@@ -4,8 +4,10 @@ import logging
 from flask import Flask, request
 import sys
 from musica import *
-from matching import casa_sequencia
-from sequencias_db import carregar_catalogo, init_db
+from matching import (casa_sequencia, montar_chaves, normalizar_entrada,
+        validar_acordes)
+from sequencias_db import (carregar_catalogo, init_db, inserir_sequencia,
+        SEQUENCIAS_SEED, SequenciaDuplicada)
 from collections import OrderedDict
 import unicodedata
 
@@ -44,12 +46,6 @@ TAM_PAGINA = 100
 genero_musicas = {}
 generos = set()
 acordes = set()
-sequencias = {'BmGDA' : 0,
-        'CGAmF' : 1,
-        'EmG' : 2,
-        'CA7DmG7' : 3,
-        'GmF' : 4,
-        'CC7FFm' : 5}
 
 musicas_dict = {}
 
@@ -116,7 +112,7 @@ def conferir_matching():
     Uma unica passada pelo catalogo de musicas; divergencia nao derruba o
     processo (o app continua servindo), mas vira warning e bloqueia o passo 7.
     """
-    ids = sorted(catalogo_sequencias['por_id'])
+    ids = [id_seq for id_seq, _ in SEQUENCIAS_SEED]
     alvos = {id_seq: [acorde.lower() for acorde in
                       catalogo_sequencias['por_id'][id_seq]['acordes']]
              for id_seq in ids}
@@ -207,6 +203,66 @@ def get_generos():
 def get_acordes():
     return json.dumps(list(acordes))
 
+def id_por_sequencia(param):
+    """Resolve o id pela chave com virgulas e, depois, pela chave legada."""
+    tokens = normalizar_entrada(param)
+    if not tokens:
+        return None
+    chave, chave_legado = montar_chaves(tokens)
+    id_seq = catalogo_sequencias['por_chave'].get(chave)
+    if id_seq is not None:
+        return id_seq
+    return catalogo_sequencias['por_chave_legado'].get(chave_legado)
+
+def cadastrar_sequencia():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return json.dumps({'erro': 'corpo deve ser um objeto JSON'}), 400
+
+    tokens, erro = validar_acordes(payload.get('acordes'))
+    if erro is not None:
+        return json.dumps({'erro': erro}), 400
+
+    chave, chave_legado = montar_chaves(tokens)
+
+    id_existente = catalogo_sequencias['por_chave'].get(chave)
+    if id_existente is None:
+        id_existente = catalogo_sequencias['por_chave_legado'].get(chave_legado)
+    if id_existente is not None:
+        return json.dumps({'erro': 'sequencia ja cadastrada',
+                           'id': id_existente}), 409
+
+    try:
+        id_seq, criado_em = inserir_sequencia(tokens, CIFRAME_DB_PATH)
+    except SequenciaDuplicada as erro_duplicada:
+        # corrida entre a checagem e o INSERT: nunca 500
+        return json.dumps({'erro': 'sequencia ja cadastrada',
+                           'id': erro_duplicada.id_existente}), 409
+
+    # mapas so sao atualizados depois do commit
+    catalogo_sequencias['por_chave'][chave] = id_seq
+    catalogo_sequencias['por_chave_legado'][chave_legado] = id_seq
+    catalogo_sequencias['por_id'][id_seq] = {
+        'acordes': tokens,
+        'criado_em': criado_em,
+    }
+    return json.dumps({'id': id_seq, 'acordes': tokens,
+                       'criado_em': criado_em}), 201
+
+@app.route('/sequencias', methods=['GET', 'POST'])
+def sequencias_endpoint():
+    if request.method == 'POST':
+        return cadastrar_sequencia()
+
+    return json.dumps([
+        {
+            'id': id_seq,
+            'acordes': catalogo_sequencias['por_id'][id_seq]['acordes'],
+            'criado_em': catalogo_sequencias['por_id'][id_seq]['criado_em'],
+        }
+        for id_seq in sorted(catalogo_sequencias['por_id'])
+    ])
+
 @app.route('/musica/<m_id>/')
 def get_musica(m_id):
     return json.dumps(musicas[m_id].__dict__)
@@ -232,11 +288,10 @@ def get_similares():
         musica = musicas[id_musica_tag]
         acordes = musica.acordes
     elif sequencia_tag:
-        acordes = sequencia_tag.replace(',','')
+        id_seq = id_por_sequencia(sequencia_tag)
         similares = []
 
-        if acordes in sequencias:
-            id_seq = sequencias[acordes]
+        if id_seq is not None:
             acordes_seq = catalogo_sequencias['por_id'][id_seq]['acordes']
             similares = get_pagina(
                     get_similares_por_sequencia(acordes_seq, generos_key),
