@@ -193,7 +193,7 @@ def remover_combinantes(string):
     exemplo 2: /musica'''
 @app.route('/musicas')
 def get_musicas():
-    return json.dumps([v.__dict__ for v in musicas.values()])
+    return json.dumps([v.para_dict() for v in musicas.values()])
 
 @app.route('/generos')
 def get_generos():
@@ -265,7 +265,7 @@ def sequencias_endpoint():
 
 @app.route('/musica/<m_id>/')
 def get_musica(m_id):
-    return json.dumps(musicas[m_id].__dict__)
+    return json.dumps(musicas[m_id].para_dict())
 
 @app.route('/similares')
 def get_similares():

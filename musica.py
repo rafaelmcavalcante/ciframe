@@ -29,5 +29,16 @@ class Musica:
 
             self.url = 'http://www.cifraclub.com.br/%s/%s' % (id_artista, id_musica)
 
+    def para_dict(self):
+        """Payload historico de /musicas e /musica/<id>/, sem os derivados.
+
+        cifra_lower e vocabulario existem para o matching e nao sao
+        serializaveis (frozenset) nem fazem parte do contrato da API.
+        """
+        dados = dict(self.__dict__)
+        dados.pop('cifra_lower', None)
+        dados.pop('vocabulario', None)
+        return dados
+
     def __str__(self):
         return '%s,%s,%s' % (self.id_unico_musica, self.genero, self.popularidade)

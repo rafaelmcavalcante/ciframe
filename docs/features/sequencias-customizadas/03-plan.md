@@ -156,6 +156,11 @@ antes). O endpoint `GET /sequencias` só nasce no passo 4.
   `conferencia seq=<id> calculado=<n> tag=<n> igual=<bool>`. Divergência vira
   `warning` e bloqueia o passo 7; não derruba o processo (o app continua
   servindo, mas a regressão é obrigatória).
+- [x] `Musica.para_dict()` devolve uma cópia do `__dict__` sem `cifra_lower`
+  e `vocabulario`; `/musicas` e `/musica/<id>/` usam esse método para manter os
+  12 campos historicos e nao tentar serializar o `frozenset`. Sem isso, o gate
+  do passo 7 encontrou `GET /musica/<id>/` com 500 (`TypeError: frozenset is
+  not JSON serializable`) e `/musicas` teria o mesmo erro.
 - [x] **Decisão — `Musica.seqs_famosas`:** manter o parsing da tag **apenas como
   conferência de startup** nesta entrega; nenhum request passa a usá-lo.
   - Custo de manter: uma lista por música (67.585 listas pequenas, alguns MB),
@@ -427,7 +432,7 @@ python3 scripts/capture_baseline.py \
 | Arquivo | Mudança |
 |---|---|
 | `main.py` | Inicialização do banco/mapa; normalização de matching; `generos = sorted(...)`; substituição do lookup em `seqs_famosas` pelo matcher; `GET/POST /sequencias`; lookup do `/similares` por `chave`/`chave_legado`; remoção do dict `sequencias` |
-| `musica.py` | `cifra_lower` e `vocabulario` derivados no construtor; `seqs_famosas` mantido temporariamente (decisão do passo 2) |
+| `musica.py` | `cifra_lower` e `vocabulario` derivados no construtor; `para_dict()` mantém o payload histórico de `/musicas`/`/musica/<id>/`; `seqs_famosas` mantido temporariamente (decisão do passo 2) |
 | `sequencias_db.py` (novo) | Caminho do banco, esquema, seeds 0–5, `user_version`, leitura do catálogo, inserção e exceção de duplicidade |
 | `matching.py` (novo) | Normalização de entrada, montagem de `chave`/`chave_legado`, validação sintática e `casa_sequencia` |
 | `static/assets/js/controllers/sequencia.js` | Catálogo via `GET /sequencias`; formulário e `POST`; estados de loading/erro/vazio; remoção dos 4 literais |
