@@ -380,7 +380,7 @@ o comando sem `-v` perde o cadastro na recriação (comportamento documentado).
 **Arquivos:** nenhum código novo; reutilizar `scripts/capture_baseline.py` e o
 bloco de comparação de `docs/features/sequencias-customizadas/baseline/README.md`.
 
-- [ ] Build e execução com volume novo, para exercitar também a criação
+- [x] Build e execução com volume novo, para exercitar também a criação
   idempotente e os seeds:
 
 ```bash
@@ -389,7 +389,7 @@ docker run -d --name ciframe-candidate -p 8080:8080 \
   -v ciframe-candidate-data:/app/db ciframe-candidate
 ```
 
-- [ ] Capturar as 6 sequências com o container novo. **Sempre** passar
+- [x] Capturar as 6 sequências com o container novo. **Sempre** passar
   `--fixture-dir` para `/tmp`: o default do script é o fixture versionado e
   sobrescrevê-lo destruiria o baseline.
 
@@ -399,7 +399,7 @@ python3 scripts/capture_baseline.py \
   --fixture-dir /tmp/opencode/baseline-candidate-fixture
 ```
 
-- [ ] Comparar por **conjunto de ids** (não por ordem) contra
+- [x] Comparar por **conjunto de ids** (não por ordem) contra
   `docs/features/sequencias-customizadas/baseline/`, usando o bloco Python de
   `baseline/README.md` (“Como comparar depois da mudança”). Critério:
 
@@ -417,15 +417,31 @@ python3 scripts/capture_baseline.py \
   fixture com `GET /musica/<id>`: o fixture versionado guarda apenas os ids, então
   a comparação campo a campo não é reproduzível e não entra no critério. `ids_sha256`
   e a ordem **não** entram no critério.
-- [ ] Teste manual de cadastro e busca, no container e pela UI:
+- [x] Teste manual de cadastro e busca, no container e pela UI:
   `POST {"acordes":["Am","F","C","G"]}` → 201; `GET /sequencias` mostra 7;
   `?sequencia=Am,F,C,G` e `?sequencia=AmFCG` devolvem o mesmo conjunto;
   recarregar a página mantém a sequência; `docker rm -f ciframe-candidate` e
   novo `docker run` com o mesmo volume mantém o cadastro.
-- [ ] Confirmar que a ordem é estável entre dois containers novos (mesmo corpo
+- [x] Confirmar que a ordem é estável entre dois containers novos (mesmo corpo
   na página 1 de `Bm,G,D,A`) e que `/generos` continua com 52 itens ordenados.
-- [ ] Registrar commit, sha256 do CSV, nome do volume e totais obtidos para
+- [x] Registrar commit, sha256 do CSV, nome do volume e totais obtidos para
   colar no `04-test-report.md` na fase de testes.
+
+Registro desta execução:
+
+- commit: `cf922e0` (o fix `para_dict()` entrou antes da rodada final)
+- imagem: `ciframe-candidate`
+- CSV: `data/top/dataset_final.csv`, sha256
+  `5f94f49b945ffac76f9a114b353b51d6a07b9e6feeb1243ce5989295234b9207`
+- volume: `ciframe-candidate-data`
+- totais por id: 199, 296, 4, 5, 7, 3 (total 514); todos os conjuntos batem
+  com `docs/features/sequencias-customizadas/baseline/`
+- payload de `/musica/<id>/`: 9 campos
+- persistência: `docker rm -f` + novo `docker run` com o mesmo volume mantém a
+  sequência cadastrada (`Am,F,C,G`, id 6, 7 itens no catálogo, 278 resultados);
+  sem `-v`, um container novo volta aos 6 seeds
+- ordem estável entre dois containers novos na página 1 de `Bm,G,D,A`;
+  `/generos` com 52 itens ordenados
 
 ## Arquivos afetados
 
