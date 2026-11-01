@@ -413,9 +413,10 @@ python3 scripts/capture_baseline.py \
 | 5 | `C,C7,F,Fm` | 3 |
 | | **total** | **514** |
 
-  Também conferir o formato do payload (os 9 campos por música) amostrando ids do
-  fixture com `GET /musica/<id>`: o fixture versionado guarda apenas os ids, então
-  a comparação campo a campo não é reproduzível e não entra no critério. `ids_sha256`
+  Também conferir o formato do payload amostrando ids do fixture: 12 campos em
+  `GET /musica/<id>` e os 9 de sempre em `?sequencia=`. O fixture versionado
+  guarda apenas os ids, então a comparação campo a campo não é reproduzível e não
+  entra no critério. `ids_sha256`
   e a ordem **não** entram no critério.
 - [x] Teste manual de cadastro e busca, no container e pela UI:
   `POST {"acordes":["Am","F","C","G"]}` → 201; `GET /sequencias` mostra 7;
@@ -436,7 +437,8 @@ Registro desta execução:
 - volume: `ciframe-candidate-data`
 - totais por id: 199, 296, 4, 5, 7, 3 (total 514); todos os conjuntos batem
   com `docs/features/sequencias-customizadas/baseline/`
-- payload de `/musica/<id>/`: 9 campos
+- payload de `/musica/<id>/`: 12 campos (os mesmos de antes, sem `cifra_lower`
+  e `vocabulario`); `/similares?sequencia=` continua com os 9 campos
 - persistência: `docker rm -f` + novo `docker run` com o mesmo volume mantém a
   sequência cadastrada (`Am,F,C,G`, id 6, 7 itens no catálogo, 278 resultados);
   sem `-v`, um container novo volta aos 6 seeds
@@ -541,7 +543,7 @@ aumento de workers/threads tornam a concorrência real. Testar:
 | 4 | **Cadastro funciona:** `POST` válido devolve 201, aparece no `GET`, sobrevive a `docker rm` + novo `docker run` com o mesmo volume | passos 4 e 6 |
 | 5 | `POST` duplicado devolve 409 com o id existente; payload inválido devolve 400; nenhum caso devolve 500 | passo 4 |
 | 6 | **Busca por sequência nova funciona:** `?sequencia=Am,F,C,G` e `?sequencia=AmFCG` devolvem o mesmo conjunto, e a UI busca pela sequência cadastrada | passos 4, 5 e 7 |
-| 7 | **As 6 originais mantêm o mesmo conjunto:** 199, 296, 4, 5, 7, 3 (514 no total); formato dos 9 campos conferido por amostragem de ids do fixture via `GET /musica/<id>` (o fixture versionado guarda só os ids); ordem e `ids_sha256` não são critério | passo 7 |
+| 7 | **As 6 originais mantêm o mesmo conjunto:** 199, 296, 4, 5, 7, 3 (514 no total); payload de `/musica/<id>` com os 12 campos históricos, conferido por amostragem de ids do fixture (o fixture versionado guarda só os ids); ordem e `ids_sha256` não são critério | passo 7 |
 | 8 | Ordem determinística: `/generos` ordenado e dois processos novos devolvem a mesma página 1; conjuntos/contagens de `/search` e `/similares` inalterados | passo 3 |
 | 9 | Frontend lista 6 sequências do backend, cadastra com loading/erro/vazio, e o `ng-hide` de `sequencia.html:43` não esconde resultados | passo 5 |
 | 10 | `db/` e `*.db` fora do Git e do build; README/AGENTS documentam o volume e o `CIFRAME_DB` | passo 6 |
