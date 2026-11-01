@@ -294,41 +294,41 @@ ambiente):
 **Arquivos:** `static/assets/js/controllers/sequencia.js`,
 `static/templates/sequencia.html`.
 
-- [ ] Remover os quatro literais (`sequencia.js:2-37`). No início do controller,
+- [x] Remover os quatro literais (`sequencia.js:2-37`). No início do controller,
   chamar `carregarSequencias()`, que faz `$http.get("sequencias")` e monta
   `vm.sequenciasFamosas` no formato que o template já usa:
   `{id, acordes: [{acorde, cor: "#2E1C74"}]}`. Sem fallback hardcoded: catálogo
   velho é pior que erro visível.
-- [ ] Estados do catálogo: `vm.carregandoSequencias`, `vm.erroSequencias` e
+- [x] Estados do catálogo: `vm.carregandoSequencias`, `vm.erroSequencias` e
   `vm.catalogoVazio`. Em erro, mostrar mensagem e botão “Tentar de novo”
   (`ng-click="Sequencia.carregarSequencias()"`); em vazio, “Nenhuma sequência
   cadastrada” (os seeds normalmente evitam esse estado, mas ele é previsto).
-- [ ] Formulário de cadastro: `vm.novaSequencia` (texto), `vm.cadastrando`,
+- [x] Formulário de cadastro: `vm.novaSequencia` (texto), `vm.cadastrando`,
   `vm.erroCadastro` e `vm.cadastrarSequencia()`. Dividir por vírgula, aplicar
   `trim`, descartar vazios e validar no cliente os mesmos limites do servidor
   (1–12 acordes, token até 12, sem espaço interno/`,`/`;`/`|`). Fazer
   `$http.post("sequencias", {acordes: tokens})`.
-- [ ] Em `201`: acrescentar o objeto devolvido ao catálogo (convertendo para o
+- [x] Em `201`: acrescentar o objeto devolvido ao catálogo (convertendo para o
   formato do `df-hex`), selecionar a sequência e chamar
   `pesquisarPorSequencia(sequencia)` para já mostrar os resultados. Em
   `400`/`409`: exibir `data.erro`; em `409`, usar o `id` devolvido apenas na
   mensagem (não cadastrar de novo). Sempre limpar `cadastrando` no `finally`
   (ou nos dois callbacks).
-- [ ] Manter `createChordsString` (`sequencia.js:55-61`) e a URL relativa
+- [x] Manter `createChordsString` (`sequencia.js:55-61`) e a URL relativa
   (`sequencia.js:72-77`), que continuam produzindo `?sequencia=Am,F,C,G`. Não
   mexer em rota (`routes.js:17-21`) nem no carregamento do script
   (`index.html:145`).
-- [ ] Template: colocar o formulário acima dos hexágonos (`sequencia.html:5-14`),
+- [x] Template: colocar o formulário acima dos hexágonos (`sequencia.html:5-14`),
   com input, botão, indicador de carregamento do cadastro e parágrafo de erro.
   Manter a lista de sequências no `ng-repeat` existente.
-- [ ] Corrigir `ng-hide="music.diferenca.length"` (`sequencia.html:43`):
+- [x] Corrigir `ng-hide="music.diferenca.length"` (`sequencia.html:43`):
   remover o atributo, porque a resposta de sequência não tem `diferenca` e a
   condição é sempre `undefined`. Adicionar estado vazio dos resultados
   (“Nenhuma música encontrada”) quando a busca terminou
   (`showSearchResultsCount && !isSearching && musics.length === 0`) e um
   “Buscando…” ligado a `isSearching`. Limpar `showSearchResultsCount` em
   `limparPesquisa()` para o estado vazio não reaparecer fora de contexto.
-- [ ] Não alterar a lista hardcoded de gêneros (`app.js:6-58`); é divergência
+- [x] Não alterar a lista hardcoded de gêneros (`app.js:6-58`); é divergência
   pré-existente e fora do escopo.
 
 **Verificação:** no browser, abrir `/#/porsequencia` com o backend novo:
