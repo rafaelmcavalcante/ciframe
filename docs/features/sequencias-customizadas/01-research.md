@@ -2,7 +2,7 @@
 
 ## Resumo
 
-O matching de sequência não é calculado em tempo real hoje: `GET /similares?sequencia=...` remove as vírgulas da query (`main.py:191`), usa a string como chave do dict `sequencias` (`main.py:40-45`) e filtra músicas pela tag pré-computada `SEQ_FAMOSA` (`main.py:203-223`). O baseline real no container Docker é 199, 296, 4, 5, 7 e 3 músicas (514 no total), com página de no máximo 100 (`main.py:35`, `main.py:226-228`). O experimento `scripts/research_matching.py` mostra que nenhuma definição "natural" (contígua, com lacunas, contenção de conjuntos, ordem dos distintos) reproduz esse baseline; só a reprodução literal da regra que gerou a tag (`scripts/generate_data_set.py:7-24`) reproduz as 6 sequências, com 67.585/67.585 linhas de acordo. Essa regra exige a sequência contígua **e** que todo o vocabulário da música esteja contido no vocabulário da sequência. O frontend `#/porsequencia` mostra 4 sequências hardcoded em JS (`static/assets/js/controllers/sequencia.js:2-37`), correspondentes aos ids 0, 1, 4 e 5; os ids 2 (`Em,G`) e 3 (`C,A7,Dm,G7`) não aparecem. O DeepWiki confirmou o fluxo de `/similares`, as 6 sequências e a divergência 4 vs 6, mas errou ao afirmar que já existem SQLite, `POST /similares/cadastrar` e matching em tempo real; nada disso está no código local.
+O matching de sequência não é calculado em tempo real hoje: `GET /similares?sequencia=...` remove as vírgulas da query (`main.py:191`), usa a string como chave do dict `sequencias` (`main.py:40-45`) e filtra músicas pela tag pré-computada `SEQ_FAMOSA` (`main.py:203-223`). O baseline real no container Docker é 199, 296, 4, 5, 7 e 3 músicas (514 no total), com página de no máximo 100 (`main.py:35`, `main.py:226-228`). O fixture versionado em `docs/features/sequencias-customizadas/baseline/` repete esses totais e tem exatamente os mesmos ids das tags do CSV e da regra que as gerou. O experimento `scripts/research_matching.py` mostra que nenhuma definição "natural" (contígua, com lacunas, contenção de conjuntos, ordem dos distintos) reproduz esse baseline; só a reprodução literal da regra que gerou a tag (`scripts/generate_data_set.py:7-24`) reproduz as 6 sequências, com 67.585/67.585 linhas de acordo. Essa regra exige a sequência contígua **e** que todo o vocabulário da música esteja contido no vocabulário da sequência. O frontend `#/porsequencia` mostra 4 sequências hardcoded em JS (`static/assets/js/controllers/sequencia.js:2-37`), correspondentes aos ids 0, 1, 4 e 5; os ids 2 (`Em,G`) e 3 (`C,A7,Dm,G7`) não aparecem. O DeepWiki confirmou o fluxo de `/similares`, as 6 sequências e a divergência 4 vs 6, mas errou ao afirmar que já existem SQLite, `POST /similares/cadastrar` e matching em tempo real; nada disso está no código local.
 
 ## 1. Algoritmo de matching
 
@@ -47,7 +47,7 @@ O item 2 explica os números baixos: não basta a música conter a progressão; 
 
 ### 2.1 Baseline
 
-Ambiente: `docker build -t ciframe .` e `docker run -d --name ciframe-baseline -p 8080:8080 ciframe`; commit `fb97001`; CSV com sha256 `5f94f49b945ffac76f9a114b353b51d6a07b9e6feeb1243ce5989295234b9207`. `/generos` respondeu 200 com array JSON. As páginas foram salvas em `/tmp/opencode/baseline/<id>_<chave>/pagina_<n>.json`, com resumo em `/tmp/opencode/baseline/summary.json`.
+Ambiente: `docker build -t ciframe .` e `docker run -d --name ciframe-baseline -p 8080:8080 ciframe`; captura ao vivo no commit `fb97001`, recapturada no commit `40c913a` para o fixture versionado; CSV com sha256 `5f94f49b945ffac76f9a114b353b51d6a07b9e6feeb1243ce5989295234b9207` nos dois manifestos. `/generos` respondeu 200 com array JSON (`text/html; charset=utf-8`). As páginas da primeira captura foram salvas em `/tmp/opencode/baseline/<id>_<chave>/pagina_<n>.json`, com resumo em `/tmp/opencode/baseline/summary.json` e metadados em `/tmp/opencode/baseline/metadata.json`; a captura versionada está em `docs/features/sequencias-customizadas/baseline/` (`manifest.json` + `seq-<id>-ids.json`). O manifesto versionado registra `commit=40c913a30f9d9a0f3642fd9da35afb341c09ee15`, `generos.count=52` e `unique_ids == total` para as 6 sequências.
 
 | seq | query | página 1 | página 2 | página 3 | total | tags no CSV |
 |---|---|---:|---:|---:|---:|---:|
@@ -58,6 +58,18 @@ Ambiente: `docker build -t ciframe .` e `docker run -d --name ciframe-baseline -
 | 4 | `Gm,F` | 7 | 0 | — | **7** | 7 |
 | 5 | `C,C7,F,Fm` | 3 | 0 | — | **3** | 3 |
 | | | | | | **514** | **514** |
+
+Conferência do fixture versionado contra as tags do CSV e contra a regra `e_legacy_tag_rule` (mesma execução do experimento em 2026-11-01: 67.585 linhas carregadas, 0 malformadas):
+
+| seq | ids no fixture | tags no CSV | previsto por `e` | fixture = tags = `e` |
+|---|---:|---:|---:|:---:|
+| 0 | 199 | 199 | 199 | sim |
+| 1 | 296 | 296 | 296 | sim |
+| 2 | 4 | 4 | 4 | sim |
+| 3 | 5 | 5 | 5 | sim |
+| 4 | 7 | 7 | 7 | sim |
+| 5 | 3 | 3 | 3 | sim |
+| | **514** | **514** | **514** | **6/6** |
 
 A página 1 é limitada por `TAM_PAGINA = 100` (`main.py:35`) e `get_pagina` (`main.py:226-228`). O frontend de sequência não envia `pagina` (`static/assets/js/controllers/sequencia.js:72-77`), então a UI recebe no máximo 100 resultados para os ids 0 e 1. Sondagens de borda: `sequencia=BmGDA` (sem vírgulas) devolve 100 na página 1; `sequencia=bm,g,d,a` devolve `[]` (chave case-sensitive); `sequencia=Bm, G, D, A` devolve `[]` (o `replace` não remove espaços, `main.py:191`).
 
@@ -73,7 +85,7 @@ A página 1 é limitada por `TAM_PAGINA = 100` (`main.py:35`) e `get_pagina` (`m
 | `d_distinct_relative_order` | remove repetições mantendo a primeira ocorrência; a sequência é subsequência dessa lista |
 | `e_legacy_tag_rule` | reprodução literal de `scripts/generate_data_set.py:7-24`: substring contígua + vocabulário da música contido no da sequência |
 
-Comando: `python3 scripts/research_matching.py --baseline /tmp/opencode/baseline --json-out /tmp/opencode/research_matching.json`. Resultado: 67.585 linhas carregadas, 0 malformadas, 514 com tag e **67.585/67.585 linhas com o conjunto de tags previsto por `e` igual ao do CSV** (`scripts/research_matching.py:227-235`, `scripts/research_matching.py:270-272`).
+Comando: `python3 scripts/research_matching.py --baseline /tmp/opencode/baseline --json-out /tmp/opencode/research_matching.json`. Nesta revisão o script também foi executado sem baseline (`--baseline ''`), e o fixture versionado foi comparado por conjunto de ids com as tags e com a regra `e`; as contagens das cinco definições foram idênticas às da tabela abaixo. Resultado: 67.585 linhas carregadas, 0 malformadas, 514 com tag e **67.585/67.585 linhas com o conjunto de tags previsto por `e` igual ao do CSV** (`scripts/research_matching.py:227-235`, `scripts/research_matching.py:270-272`).
 
 | definição | TP | FP | FN | precisão | recall | sequências com conjunto exato |
 |---|---:|---:|---:|---:|---:|---:|
@@ -163,13 +175,21 @@ O frontend cobre os ids **0, 1, 4 e 5**; ficam de fora `Em,G` (id 2) e `C,A7,Dm,
 - Não pagina: como não envia `pagina`, recebe a página 1 (até 100 resultados) e não tem controle de próxima página (`main.py:176`, `main.py:196`, `main.py:226-228`).
 - O filtro `ng-hide="music.diferenca.length"` (`sequencia.html:43`) foi escrito para resultados de busca por acordes, que têm `diferenca` (`main.py:246-258`); a resposta de `/similares?sequencia=` não tem `diferenca` (`main.py:210-220`), então a expressão é `undefined` e o filtro não esconde nada.
 - O constant `RESTAPI` em `static/assets/js/app.js:3-5` aponta para `http://localhost:5003`, mas o controller de sequência usa `apiUrl = ""` (`sequencia.js:72`), ou seja, URL relativa à origem.
-- A lista de gêneros do select também é hardcoded no JS (`static/assets/js/app.js:6-58`, 51 gêneros), não vem de `/generos` (`main.py:158-160`).
+- A lista de gêneros do select também é hardcoded no JS (`static/assets/js/app.js:6-58`, 51 gêneros), não vem de `/generos` (`main.py:158-160`); o `manifest.json` do baseline registra 52 gêneros retornados pelo backend (`docs/features/sequencias-customizadas/baseline/manifest.json`).
 
 ### 4.5 Por que 4 != 6
 
 O backend tem 6 entradas no dict `sequencias` (`main.py:40-45`) e o CSV tem tags para esses 6 ids. O controller tem apenas 4 objetos literais (`sequencia.js:2-37`), escolhidos manualmente; não há chamada que leia o dict do backend. Por isso a tela mostra 4, e os ids 2 (`Em,G`) e 3 (`C,A7,Dm,G7`) só são acessíveis por URL manual (`/similares?sequencia=Em,G` ou `...=C,A7,Dm,G7`).
 
-## 5. DeepWiki: hipótese vs código local
+## 5. Fluxo entre componentes
+
+1. **Startup**: `main.py:49-98` abre o CSV, descarta a primeira linha (`main.py:50`), passa `CIFRA` por `limpa_cifra` (`main.py:11-23`, `main.py:58-61`), divide `SEQ_FAMOSA` por `;` (`main.py:63`) e monta cada `Musica` com `cifra`, `acordes` e `seqs_famosas` (`musica.py:16-18`). `musicas` é um `OrderedDict` ordenado por popularidade (`main.py:87-89`); `genero_musicas` indexa as mesmas instâncias por gênero (`main.py:80-85`, `main.py:94-96`).
+2. **Requisição de sequência**: `GET /similares?sequencia=Bm,G,D,A` entra em `get_similares` (`main.py:170-201`), o ramo `sequencia` remove as vírgulas (`main.py:191`), consulta o dict `sequencias` (`main.py:40-45`, `main.py:194-195`) e chama `get_similares_por_sequencia` (`main.py:203-223`), que filtra por gênero (`main.py:205`, `main.py:266-272`) e testa `str(id_seq) in musica.seqs_famosas` (`main.py:209`).
+3. **Resposta**: `get_pagina` corta a lista em blocos de 100 (`main.py:35`, `main.py:226-228`) e `json.dumps` serializa a lista de dicts de 9 campos (`main.py:210-220`); `Access-Control-Allow-Origin: *` é adicionado em toda resposta (`main.py:274-277`).
+4. **Frontend**: a rota `#/porsequencia` (`static/assets/js/routes.js:17-21`) carrega `static/templates/sequencia.html` com `SequenciaController`; o controller monta a URL relativa com os acordes separados por vírgula (`static/assets/js/controllers/sequencia.js:55-77`), faz `$http.get` (`static/assets/js/controllers/sequencia.js:77`) e renderiza `vm.musics` no template (`static/templates/sequencia.html:40-58`).
+5. **Acoplamentos**: o dict `sequencias` é o único catálogo completo no backend; a lista JS é uma cópia parcial de 4 itens (`static/assets/js/controllers/sequencia.js:2-37`); a tag `SEQ_FAMOSA` é a única fonte de matching de sequência no backend; o limite de 100 é aplicado no backend, mas o controller não envia `pagina` (`static/assets/js/controllers/sequencia.js:72-77`).
+
+## 6. DeepWiki: hipótese vs código local
 
 Consulta ao MCP `deepwiki` para `joaoarthurbm/ciframe`. A primeira resposta afirmou que a feature já existe com SQLite, `POST /similares/cadastrar` e matching em tempo real. Quando confrontado a citar arquivo e linha, recuou e disse que SQLite e o endpoint estão "descritos na documentação", mas não implementados; ainda assim afirmou que o ADR 0002 documenta SQLite.
 

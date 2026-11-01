@@ -39,6 +39,9 @@ and runtime custom matching already exist.
 
 - Baseline pages are in `/tmp/opencode/baseline/<id>_<key>/pagina_<n>.json`,
   with totals in `summary.json`: 199 / 296 / 4 / 5 / 7 / 3.
+- The committed fixture in `docs/features/sequencias-customizadas/baseline/`
+  (`manifest.json` + `seq-<id>-ids.json`) has the same totals and, for all six
+  ids, the same id sets as the CSV tags and as `e_legacy_tag_rule`.
 - `scripts/research_matching.py` reproduces the CSV parsing and compares five
   definitions. `e_legacy_tag_rule` gives TP=514, FP=0, FN=0 and exact sets for
   6/6 sequences; `a`, `b` and `c` have recall 1.0 but 5,945 / 28,127 / 31,102
@@ -88,3 +91,7 @@ and runtime custom matching already exist.
 - `scripts/research_matching.py` — stdlib-only parser and matching experiment.
 - `/tmp/opencode/baseline/` — captured live responses for all pages.
 - `/tmp/opencode/research_matching.json` — full experiment output.
+- `docs/features/sequencias-customizadas/baseline/` — committed id fixtures and
+  capture manifest for the six hardcoded sequences.
+- `scripts/capture_baseline.py` — re-captures the live API into raw pages and
+  the compact fixture.
