@@ -50,16 +50,16 @@ continuar.
 
 **Arquivos:** `sequencias_db.py` (novo), `main.py`.
 
-- [ ] Criar `sequencias_db.py` com `sqlite3` apenas. Resolver o caminho nesta
+- [x] Criar `sequencias_db.py` com `sqlite3` apenas. Resolver o caminho nesta
   ordem: `CIFRAME_DB` (caminho completo do arquivo, se definido) →
   `/app/db/sequencias.db` quando `/app` existir → `./db/sequencias.db` no
   ambiente local. Criar o diretório com `os.makedirs(..., exist_ok=True)` antes
   de abrir; erro de permissão deve derrubar o startup com a mensagem e o caminho.
-- [ ] `init_db()` idempotente: abrir conexão, `PRAGMA busy_timeout=5000`, criar a
+- [x] `init_db()` idempotente: abrir conexão, `PRAGMA busy_timeout=5000`, criar a
   tabela se não existir, rodar os seeds e ajustar `PRAGMA user_version`.
   Se `user_version > 1` (banco de uma versão futura), abortar o startup em vez de
   escrever; se `0`, criar e gravar `1`; se `1`, apenas validar a tabela.
-- [ ] Esquema único, sem tabela de matches:
+- [x] Esquema único, sem tabela de matches:
 
 ```sql
 CREATE TABLE IF NOT EXISTS sequences (
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS sequences (
 );
 ```
 
-- [ ] Seed com ids explícitos e `INSERT OR IGNORE` (pode rodar em todo startup;
+- [x] Seed com ids explícitos e `INSERT OR IGNORE` (pode rodar em todo startup;
   é barato e não duplica):
 
 | id | `acordes` | `chave` | `chave_legado` |
@@ -85,23 +85,23 @@ CREATE TABLE IF NOT EXISTS sequences (
 
 `criado_em` dos seeds é gerado em UTC no primeiro `INSERT`; como as linhas já
 existem, o valor não muda depois. Próximo id livre: 6.
-- [ ] Manter o dict `sequencias` de `main.py:40-45` **intacto neste passo**: ele
+- [x] Manter o dict `sequencias` de `main.py:40-45` **intacto neste passo**: ele
   ainda é o lookup de `/similares?sequencia=...` (`main.py:194-195`). As mesmas
   seis listas viram a constante de seeds do módulo novo. A remoção do dict e do
   lookup acontece no passo 4, quando o catálogo assume a busca; removê-lo agora
   deixaria o endpoint quebrado (`NameError`) entre os passos 1 e 4.
-- [ ] `carregar_catalogo()` lê todas as linhas e devolve três mapas em memória:
+- [x] `carregar_catalogo()` lê todas as linhas e devolve três mapas em memória:
   `chave → id`, `chave_legado → id` e `id → {acordes, criado_em}`. Carregar uma
   vez no startup de `main.py`, depois do CSV (para o log sair na ordem certa) e
   antes de servir qualquer rota.
-- [ ] `inserir_sequencia(acordes)` abre conexão por operação (sem conexão
+- [x] `inserir_sequencia(acordes)` abre conexão por operação (sem conexão
   compartilhada entre threads), grava com placeholders, faz commit e devolve
   `id`/`criado_em`. Capturar `sqlite3.IntegrityError` e relançar uma exceção de
   duplicidade com o id existente.
-- [ ] No `POST`, atualizar os três mapas **somente depois** do commit. Usar
+- [x] No `POST`, atualizar os três mapas **somente depois** do commit. Usar
   `is not None` nas buscas por id: o id 0 é válido e não pode ser confundido com
   “não encontrado” (`or`/truthiness é proibido nesses lookups).
-- [ ] Log de startup: caminho do banco, `user_version`, total de linhas e
+- [x] Log de startup: caminho do banco, `user_version`, total de linhas e
   tamanho do catálogo. Falha ao abrir/criar o banco encerra o processo (fail
   fast), em vez de subir uma API sem catálogo.
 

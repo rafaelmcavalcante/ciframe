@@ -1,10 +1,15 @@
 # coding: utf-8
 import json
+import logging
 from flask import Flask, request
 import sys
 from musica import *
+from sequencias_db import carregar_catalogo, init_db
 from collections import OrderedDict
 import unicodedata
+
+logging.basicConfig(level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(name)s %(message)s')
 
 app = Flask(__name__)
 
@@ -96,6 +101,11 @@ for k,v in genero_musicas.items():
     genero_musicas[k].sort(key = lambda x : x.popularidade, reverse = True)
 
 f.close()
+
+# catalogo de sequencias persistido em SQLite, carregado uma vez por processo
+# (depois do CSV, para o log de startup sair na ordem prevista)
+CIFRAME_DB_PATH = init_db()
+catalogo_sequencias = carregar_catalogo(CIFRAME_DB_PATH)
 
 
 @app.route('/')
