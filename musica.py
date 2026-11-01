@@ -1,3 +1,6 @@
+import sys
+
+
 class Musica:
 
     def __init__(self, id_artista, nome_artista, id_musica, nome_musica,
@@ -16,6 +19,11 @@ class Musica:
             self.cifra = cifra
             self.acordes = list(set(cifra))
             self.seqs_famosas = seqs_famosas
+
+            # derivados uma unica vez para o matching de sequencias; as strings
+            # sao interned para nao duplicar um objeto por token do dataset
+            self.cifra_lower = [sys.intern(acorde.lower()) for acorde in cifra]
+            self.vocabulario = frozenset(self.cifra_lower)
 
             self.id_unico_musica = '%s_%s' % (id_artista, id_musica)
 

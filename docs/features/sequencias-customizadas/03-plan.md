@@ -128,31 +128,35 @@ antes). O endpoint `GET /sequencias` só nasce no passo 4.
 
 **Arquivos:** `matching.py` (novo), `musica.py`, `main.py`.
 
-- [ ] Em `Musica.__init__` (`musica.py:16-18`), derivar uma vez:
-  `self.cifra_lower = [t.lower() for t in cifra]` e
+- [x] Em `Musica.__init__` (`musica.py:16-18`), derivar uma vez:
+  `self.cifra_lower = [sys.intern(t.lower()) for t in cifra]` e
   `self.vocabulario = frozenset(self.cifra_lower)`. Manter `self.cifra` e
   `self.acordes` intactos: `acordes` continua sendo o `set` devolvido pela API e
-  usado na busca por acordes.
-- [ ] Em `matching.py`, implementar a regra única:
+  usado na busca por acordes. O `sys.intern` é obrigatório: sem ele, as strings
+  minúsculas duplicam um objeto por token e o RSS sobe de 233 MB para 474 MB
+  (+241 MB), acima do limite de ~100 MB; com ele fica em 313 MB (+80 MB), com
+  startup de 1,51 s contra 1,06 s do commit anterior (medido com `import main`,
+  uma passada de CSV).
+- [x] Em `matching.py`, implementar a regra única:
   `casa_sequencia(cifra_lower, vocabulario, alvo_lower) -> bool`.
   Retornar `False` para alvo vazio. Primeiro podar por vocabulário
   (`vocabulario.issubset(set(alvo_lower))`); só então procurar a fatia contígua
   preservando ordem e repetições (`tuple(cifra_lower[i:i+k]) == tuple(alvo_lower)`).
   Comparação sempre em minúsculas; sem enharmonia, sufixo ou baixo invertido.
   Não usar `musica.acordes` (set, sem ordem) para o match.
-- [ ] Em `main.py:196`, trocar a chamada para passar a lista de acordes do
+- [x] Em `main.py:196`, trocar a chamada para passar a lista de acordes do
   catálogo, e em `get_similares_por_sequencia` substituir o teste
   `str(id_seq) in musica.seqs_famosas` (`main.py:209`) por
   `casa_sequencia(musica.cifra_lower, musica.vocabulario, alvo_lower)`.
   `alvo_lower` vem de `seq_por_id[id_seq]['acordes']`, calculado uma vez por
   requisição (não por música).
-- [ ] No startup, após carregar o catálogo e o CSV, rodar a conferência única:
+- [x] No startup, após carregar o catálogo e o CSV, rodar a conferência única:
   para cada id 0–5, comparar `{m.id_unico_musica | casa_sequencia(...)}` com
   `{m.id_unico_musica | str(id) in m.seqs_famosas}`; logar
   `conferencia seq=<id> calculado=<n> tag=<n> igual=<bool>`. Divergência vira
   `warning` e bloqueia o passo 7; não derruba o processo (o app continua
   servindo, mas a regressão é obrigatória).
-- [ ] **Decisão — `Musica.seqs_famosas`:** manter o parsing da tag **apenas como
+- [x] **Decisão — `Musica.seqs_famosas`:** manter o parsing da tag **apenas como
   conferência de startup** nesta entrega; nenhum request passa a usá-lo.
   - Custo de manter: uma lista por música (67.585 listas pequenas, alguns MB),
     `main.py:63` + `musica.py:18` + o argumento do construtor continuam
@@ -168,15 +172,18 @@ antes). O endpoint `GET /sequencias` só nasce no passo 4.
     `musica[SEQ_FAMOSA] = musica[SEQ_FAMOSA].split(";")` (`main.py:63`),
     `self.seqs_famosas = seqs_famosas` (`musica.py:18`) e o parâmetro
     correspondente em `main.py:71`; reexecutar a regressão por conjunto.
-- [ ] Custo medido esperado: ~407 ms de normalização no startup para 67.585
+- [x] Custo medido esperado: ~407 ms de normalização no startup para 67.585
   linhas e ~17 ms por busca de 4 acordes; o filtro de vocabulário poda antes da
   adjacência. Se o startup regredir muito, medir antes de mudar a estratégia.
 
 **Verificação:** no log de startup, as 6 linhas `conferencia` devem sair com
 `igual=True` e contagens `199, 296, 4, 5, 7, 3`. Em paralelo, consultar as 6
 sequências (a captura completa por conjunto é o passo 7) e confirmar que uma
-sequência sem tag no CSV, mas que satisfaça a regra, também é encontrada — por
-exemplo `?sequencia=Am,F,C,G` deve devolver um conjunto não vazio.
+sequência sem tag no CSV, mas que satisfaça a regra, também é encontrada. Essa
+conferência é feita por script direto sobre o CSV com `casa_sequencia` (por
+exemplo `Am,F,C,G`, que não é seed nem tem tag): o endpoint
+`?sequencia=Am,F,C,G` só passa a responder no passo 4, quando o lookup do
+`/similares` deixa de usar o dict antigo, que reconhece apenas as 6 chaves.
 
 Medir também o custo em memória: `cifra_lower` e `vocabulario` criam uma lista e
 um `frozenset` por música (67.585 de cada). Antes de aceitar o passo, comparar o
@@ -190,7 +197,9 @@ docker run --rm --entrypoint /bin/sh ciframe-candidate -c \
 Se o crescimento passar de ~100 MB ou se o startup somar mais de ~1 s, registrar
 a medição como trade-off aceito e considerar guardar só o vocabulário (sem a
 lista `cifra_lower` por música) ou reconstruir a lista sob demanda. A decisão
-fica registrada aqui antes de seguir.
+fica registrada aqui antes de seguir. Medição desta entrega (mesma máquina,
+`import main`): 233 MB → 313 MB (+80 MB) e 1,06 s → 1,51 s com `sys.intern`;
+abaixo dos limites, então a estratégia lista + frozenset foi mantida.
 
 ### 3. Ordem determinística dos gêneros
 

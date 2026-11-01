@@ -4,12 +4,14 @@ import logging
 from flask import Flask, request
 import sys
 from musica import *
+from matching import casa_sequencia
 from sequencias_db import carregar_catalogo, init_db
 from collections import OrderedDict
 import unicodedata
 
 logging.basicConfig(level=logging.INFO,
         format='%(asctime)s %(levelname)s %(name)s %(message)s')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -108,6 +110,38 @@ CIFRAME_DB_PATH = init_db()
 catalogo_sequencias = carregar_catalogo(CIFRAME_DB_PATH)
 
 
+def conferir_matching():
+    """Tripwire de startup: matcher calculado vs tag SEQ_FAMOSA do CSV.
+
+    Uma unica passada pelo catalogo de musicas; divergencia nao derruba o
+    processo (o app continua servindo), mas vira warning e bloqueia o passo 7.
+    """
+    ids = sorted(catalogo_sequencias['por_id'])
+    alvos = {id_seq: [acorde.lower() for acorde in
+                      catalogo_sequencias['por_id'][id_seq]['acordes']]
+             for id_seq in ids}
+    calculado = {id_seq: set() for id_seq in ids}
+    tag = {id_seq: set() for id_seq in ids}
+
+    for musica in musicas.values():
+        for id_seq in ids:
+            if casa_sequencia(musica.cifra_lower, musica.vocabulario,
+                              alvos[id_seq]):
+                calculado[id_seq].add(musica.id_unico_musica)
+            if str(id_seq) in musica.seqs_famosas:
+                tag[id_seq].add(musica.id_unico_musica)
+
+    for id_seq in ids:
+        igual = calculado[id_seq] == tag[id_seq]
+        nivel = logging.INFO if igual else logging.WARNING
+        logger.log(nivel,
+                   'conferencia seq=%s calculado=%d tag=%d igual=%s',
+                   id_seq, len(calculado[id_seq]), len(tag[id_seq]), igual)
+
+
+conferir_matching()
+
+
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
@@ -203,20 +237,26 @@ def get_similares():
 
         if acordes in sequencias:
             id_seq = sequencias[acordes]
-            similares = get_pagina(get_similares_por_sequencia(id_seq, generos_key), pagina_tag)
+            acordes_seq = catalogo_sequencias['por_id'][id_seq]['acordes']
+            similares = get_pagina(
+                    get_similares_por_sequencia(acordes_seq, generos_key),
+                    pagina_tag)
         return json.dumps(similares)
 
     similares = get_similares(acordes, generos_key, id_musica_tag)
 
     return json.dumps(get_pagina(similares, pagina_tag))
 
-def get_similares_por_sequencia(id_seq, generos_key):
+def get_similares_por_sequencia(acordes_seq, generos_key):
+    # alvo normalizado uma vez por requisicao, nao por musica
+    alvo_lower = [acorde.lower() for acorde in acordes_seq]
+
     # filtra para melhor desempenho
     collection = apply_filtro(musicas.values(), generos_key)
 
     similares = []
     for musica in collection:
-        if str(id_seq) in musica.seqs_famosas:
+        if casa_sequencia(musica.cifra_lower, musica.vocabulario, alvo_lower):
             similar = {
                 'id_unico_musica' : musica.id_unico_musica,
                 'id_artista' : musica.id_artista,
