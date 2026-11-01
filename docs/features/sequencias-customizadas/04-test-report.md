@@ -2,9 +2,10 @@
 
 ## Resultado da suíte
 
-- **38 testes, todos passando** (`Ran 38 tests — OK`), em Python 3.9 do `.venv`
-  local. Tempo observado: 9,4 s a 16,0 s, dependendo da carga da máquina (a
-  maior parte é o carregamento único do CSV e a passada de equivalência).
+- **38 testes, todos passando** (`Ran 38 tests — OK`). Execução local em Python
+  3.14.8 (10,1 s a 10,7 s); a mesma suíte foi rodada no Python 3.9.22 da imagem
+  Docker (`python:3.9-slim` do `Dockerfile`), com 38 testes OK em 13,6 s. A maior
+  parte do tempo é o carregamento único do CSV e a passada de equivalência.
 - Nenhum bug de implementação foi encontrado. Nenhuma linha de `main.py`,
   `matching.py`, `sequencias_db.py`, `musica.py` ou do frontend foi alterada
   para fazer teste passar.
@@ -196,5 +197,5 @@ carregamento único do CSV e a passada de equivalência nas 67.585 linhas).
   não em todos.
 - **Performance:** tempos de startup, RSS e latência de busca não têm teste de
   regressão automatizado; as medições estão registradas no `03-plan.md`.
-- **Outras versões de Python/navegadores:** só Python 3.9 do `.venv` e Firefox
-  headless foram usados.
+- **Outras versões de Python/navegadores:** a suíte rodou em Python 3.14.8
+  (local) e 3.9.22 (imagem Docker); só Firefox headless foi usado no frontend.

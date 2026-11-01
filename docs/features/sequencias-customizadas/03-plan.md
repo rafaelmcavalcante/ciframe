@@ -493,10 +493,13 @@ Registro desta execução:
   `curl -i localhost:8080/db/sequencias.db` → 404.
 - Nenhum segredo novo; o caminho do banco vem de `CIFRAME_DB` ou do default.
 
-## Fase de testes (registrada, não executada)
+## Fase de testes (executada)
 
-Nenhum teste é escrito nesta entrega e `04-test-report.md` não é preenchido
-agora. Fica para a fase 5:
+A suíte está em `tests/` (38 testes, `unittest` da stdlib) e roda com
+`.venv/bin/python -m unittest discover -s tests -t .`. Cobertura, resultados da
+regressão e o que ficou de fora estão em
+`docs/features/sequencias-customizadas/04-test-report.md`. Os itens abaixo foram
+a lista de cobertura usada na fase 5; todos estão implementados:
 
 - **Unitários de `matching.py`:** caixa, fatia contígua, repetições,
   vocabulário contido, sequência vazia, token que só casa como substring de
@@ -508,30 +511,30 @@ agora. Fica para a fase 5:
   `Content-Type`/CORS e ausência de `jsonify`.
 - **Persistência:** criação idempotente, seeds, `user_version`, reabertura,
   volume, `CIFRAME_DB`, banco futuro (`user_version > 1`) abortando.
-- **Frontend:** sem harness no repo; validar manualmente os estados de
-  catálogo/cadastro/busca e a correção do `ng-hide` (ou criar harness se a fase
-  de testes decidir).
-- **Regressão:** automatizar a captura + comparação por conjunto e totais
-  (199, 296, 4, 5, 7, 3; 514). `baseline/README.md` já tem o script de
-  comparação; o relatório deve registrar commit, CSV e volume usados.
+- **Frontend:** sem harness no repo; validação manual dos estados de
+  catálogo/cadastro/busca e da correção do `ng-hide`, registrada no relatório.
+- **Regressão:** captura + comparação por conjunto e totais
+  (199, 296, 4, 5, 7, 3; 514), automatizada em `tests/test_regressao.py`.
 
-### O que precisa de teste de concorrência
+### Concorrência coberta nos testes
 
 O `CMD` atual roda **1 worker gunicorn síncrono**, então as requisições são
 serializadas no processo; o `main.py` de desenvolvimento (`app.run`) e um futuro
-aumento de workers/threads tornam a concorrência real. Testar:
+aumento de workers/threads tornam a concorrência real. O que está coberto:
 
-- Dois `POST` simultâneos da mesma sequência: exatamente um `201` e um `409`,
-  sem `500` e sem duas linhas iguais.
-- Vários `POST` simultâneos de sequências distintas: todos `201`, sem
-  `database is locked` (coberto por `busy_timeout`).
-- `POST` concorrente com `GET /similares` e `GET /sequencias`: sem `KeyError`/
-  estado parcial; a sequência nova só precisa aparecer depois do `201`.
-- Reinício com banco existente: seeds não duplicam e o `user_version` não é
-  reescrito.
-- Múltiplos workers (fora do suporte atual): documentar que cada worker tem seu
-  mapa e um `POST` em um worker não é visto pelo outro; se isso for necessário
-  no futuro, trocar o cache por leitura do banco ou revalidar a cada request.
+- Dois `POST` simultâneos da mesma sequência: coberto em `tests/test_api.py` e
+  `tests/test_db.py` — exatamente um `201` e um `409`, sem `500` e sem duas
+  linhas iguais.
+- Vários `POST` simultâneos de sequências distintas: coberto em
+  `tests/test_db.py` — todos `201`, sem `database is locked` (`busy_timeout`).
+- Reinício com banco existente: coberto em `tests/test_db.py` (seeds não
+  duplicam e o `user_version` não é reescrito).
+- `POST` concorrente com `GET /similares` e `GET /sequencias` não entrou na
+  suíte; o risco residual é o mapa em memória durante a escrita (estado parcial
+  não é observável porque a atualização só acontece depois do commit).
+- Múltiplos workers (fora do suporte atual): não testado — cada worker tem seu
+  mapa e um `POST` em um worker não é visto pelo outro; se isso mudar, trocar o
+  cache por leitura do banco ou revalidar a cada request.
 
 ## Definição de pronto
 
@@ -548,4 +551,4 @@ aumento de workers/threads tornam a concorrência real. Testar:
 | 9 | Frontend lista 6 sequências do backend, cadastra com loading/erro/vazio, e o `ng-hide` de `sequencia.html:43` não esconde resultados | passo 5 |
 | 10 | `db/` e `*.db` fora do Git e do build; README/AGENTS documentam o volume e o `CIFRAME_DB` | passo 6 |
 | 11 | Restrições mantidas: nenhuma dependência nova, `json.dumps` em todos os endpoints, 1 worker | revisão do diff |
-| 12 | Tarefas da fase de testes (incluindo concorrência) registradas, sem testes escritos nesta entrega | seção “Fase de testes” |
+| 12 | Testes escritos e documentados em `04-test-report.md` (38 testes, regressão por conjunto, o que ficou de fora) | `tests/` e o relatório |
