@@ -345,22 +345,22 @@ Com throttling/rede lenta, o estado de carregamento aparece; com
 **Arquivos:** `.gitignore`, `.dockerignore`, `README.md`, `AGENTS.md`;
 `Dockerfile` só se a verificação mostrar necessidade.
 
-- [ ] `.gitignore`: acrescentar `db/` e `*.db`.
-- [ ] `.dockerignore`: acrescentar `db/` e `*.db`, para o `COPY . .`
+- [x] `.gitignore`: acrescentar `db/` e `*.db`.
+- [x] `.dockerignore`: acrescentar `db/` e `*.db`, para o `COPY . .`
   (`Dockerfile:8`) não copiar banco local para a imagem.
-- [ ] `README.md`: atualizar a descrição da stack (catálogo de sequências em
+- [x] `README.md`: atualizar a descrição da stack (catálogo de sequências em
   SQLite; músicas/gêneros continuam no CSV em memória) e o comando Docker para
   `docker run -p 8080:8080 -v ciframe-data:/app/db ciframe`. Documentar que sem
   o volume `docker rm`/novo `docker run` perdem os cadastros, que
   `docker restart` preserva e que `CIFRAME_DB` sobrescreve o caminho.
-- [ ] `AGENTS.md`: mesma atualização na seção Stack (hoje diz “no database”),
+- [x] `AGENTS.md`: mesma atualização na seção Stack (hoje diz “no database”),
   no comando Docker de “Run locally” e em Gotchas (banco em `/app/db`, `db/`
   ignorado, restart vs recriação).
-- [ ] `Dockerfile`: **não alterar por padrão**. `init_db` cria `/app/db` com
+- [x] `Dockerfile`: **não alterar por padrão**. `init_db` cria `/app/db` com
   `makedirs`; o processo roda como root e o volume nomeado é criado pelo Docker.
   Só adicionar um `RUN mkdir -p /app/db` se o teste de volume sem permissão
   falhar; registrar o motivo se isso acontecer.
-- [ ] Não alterar `baseline/README.md`: ele já descreve a comparação por
+- [x] Não alterar `baseline/README.md`: ele já descreve a comparação por
   conjunto (`baseline/README.md:51-79`) e continua válido.
 
 **Verificação:** `git check-ignore -v db/sequencias.db` aponta para
