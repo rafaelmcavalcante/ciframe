@@ -205,9 +205,9 @@ abaixo dos limites, então a estratégia lista + frozenset foi mantida.
 
 **Arquivos:** `main.py`.
 
-- [ ] Trocar `generos = list(generos)` (`main.py:92`) por
+- [x] Trocar `generos = list(generos)` (`main.py:92`) por
   `generos = sorted(generos)`. Nenhuma outra mudança de ordenação.
-- [ ] Efeitos observáveis (quando a requisição passa `generos=`, a ordem já era
+- [x] Efeitos observáveis (quando a requisição passa `generos=`, a ordem já era
   a da query e não muda; a mudança vale para o caso sem filtro, que é o default):
 
 | Endpoint | O que muda | O que não muda |
@@ -219,14 +219,18 @@ abaixo dos limites, então a estratégia lista + frozenset foi mantida.
 | `GET /musicas` | nada (ordem por popularidade) | — |
 | `GET /acordes` | nada; continua `list(set)` não determinístico, fora do escopo | — |
 
-- [ ] Documentar no PR/descrição que a ordem antiga não era contrato e que a
+- [x] Documentar no PR/descrição que a ordem antiga não era contrato e que a
   página 1 pode mudar de composição; o critério de regressão continua sendo
   conjunto + total. O frontend reordena os cards por popularidade
   (`sequencia.html:42`), mas quais cards chegam na página 1 muda.
 
 **Verificação:** `curl -s localhost:5000/generos` deve satisfazer
 `g == sorted(g)`; dois containers/processos novos devem devolver a mesma página
-1 (mesmo hash do corpo) para `?sequencia=Bm,G,D,A`, o que não acontecia antes.
+1 para `?sequencia=Bm,G,D,A` comparando a **lista ordenada de
+`id_unico_musica`**, não o hash do corpo: o campo `acordes` de cada música
+continua sendo `list(set(...))` e muda de ordem entre processos. Medido nesta
+entrega: 52 gêneros ordenados e a mesma lista de 100 ids na página 1 em dois
+processos (o payload bruto difere só na ordem de `acordes`).
 
 ### 4. API `GET/POST /sequencias` e lookup do `/similares`
 

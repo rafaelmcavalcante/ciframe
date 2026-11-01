@@ -95,8 +95,8 @@ for line in f:
 musicas = OrderedDict(sorted(musicas_dict.items(),
     key=lambda x: x[1].popularidade, reverse = True))
 
-# para trabalhar melhor com json
-generos = list(generos)
+# para trabalhar melhor com json (ordem alfabetica: determinismo entre processos)
+generos = sorted(generos)
 
 # ordena genero_musicas por popularidade
 for k,v in genero_musicas.items():
