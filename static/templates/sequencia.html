@@ -4,10 +4,10 @@
       <div class="viewWindow-panel-container">
         <h4 class="text-center">Aponte uma sequencia de acordes</h4>
 
-        <form ng-submit="Sequencia.cadastrarSequencia()">
+        <form class="sequencia-form" ng-submit="Sequencia.cadastrarSequencia()">
           <div class="form-group">
             <div class="input-group">
-              <input type="text" class="form-control" placeholder="Ex.: Am, F, C, G"
+              <input type="text" class="form-control form-control-inverse" placeholder="Ex.: Am, F, C, G"
                 ng-model="Sequencia.novaSequencia" ng-disabled="Sequencia.cadastrando">
               <span class="input-group-btn">
                 <button class="btn btn-primary" type="submit" ng-disabled="Sequencia.cadastrando">

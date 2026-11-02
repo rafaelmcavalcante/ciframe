@@ -650,3 +650,11 @@ a:active {
 .flyShadow {
   animation-name: flyShadow;
 }
+
+/* form de cadastro de sequencia: o .form-control global e branco, invisivel
+   sobre o fundo branco do input do Bootstrap; o invertido usa texto escuro.
+   A mensagem de erro usa o amarelo da paleta para ler sobre o magenta. */
+.sequencia-form .text-danger {
+  color: #E9BC00;
+  font-weight: bold;
+}

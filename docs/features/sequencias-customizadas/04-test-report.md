@@ -158,6 +158,23 @@ não por ordem; `ids_sha256` e ordem não entram. As contagens também aparecem 
 forma independente na equivalência com a tag (seção anterior) e no teste de
 paginação da API.
 
+## Correções encontradas na revisão manual
+
+A revisão manual da UI, feita depois da suíte, encontrou dois defeitos visuais no
+formulário novo. Ambos foram corrigidos antes da entrega:
+
+- **Texto digitado invisível:** o input usava `.form-control`, que em
+  `static/assets/css/app.css` força `color: #fff`, sobre o fundo branco padrão do
+  Bootstrap — o texto só aparecia quando selecionado. Passou a usar
+  `form-control-inverse` (texto `#333`), o mesmo padrão dos outros campos do app.
+- **Mensagem de erro com contraste baixo:** o vermelho do `.text-danger` sobre o
+  magenta do painel lia mal. Passou a `#E9BC00` (o amarelo da paleta) e negrito,
+  escopado em `.sequencia-form`.
+
+Nenhum teste automatizado cobre CSS/layout (não há harness de frontend), então
+esses dois casos estão registrados como verificação manual, não como teste. A
+gravação de demonstração (`demo.gif`/`demo.mp4`) foi refeita depois da correção.
+
 ## Como rodar
 
 A partir da raiz do repositório, com o virtualenv já criado:
