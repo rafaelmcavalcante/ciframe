@@ -11,7 +11,8 @@ Usage (from the repo root):
   python3 scripts/export_big_pickle_sessions.py
   python3 scripts/export_big_pickle_sessions.py --out ~/outra-pasta
 
-The exports are deliberately kept outside the repo, in ~/sessoes-ciframe.
+The exports land in docs/features/sequencias-customizadas/sessoes and are
+committed with the rest of the feature docs.
 """
 import argparse
 import json
@@ -57,7 +58,7 @@ def is_big_pickle(data):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--out', default=os.path.expanduser('~/sessoes-ciframe'))
+    parser.add_argument('--out', default='docs/features/sequencias-customizadas/sessoes')
     args = parser.parse_args()
 
     os.makedirs(args.out, exist_ok=True)
